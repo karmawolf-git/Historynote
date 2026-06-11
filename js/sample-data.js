@@ -6,7 +6,7 @@
 const SAMPLE_HCPS = [
   {
     name: "김민준", hospital: "서울중앙병원", department: "내분비내과", title: "교수",
-    memo: "외래 화/목 오전",
+    schedule: "화오전, 목오전 · 본관 304호", memo: "",
     notes: [
       "신약 효과는 인정하지만 약가가 부담된다고 함. 환자 본인부담금 비교 자료 요청.",
       "CVOT 데이터 중 신장 보호 서브그룹 분석에 관심. NEJM 논문 리프린트 보내달라고 하심.",
@@ -16,7 +16,7 @@ const SAMPLE_HCPS = [
   },
   {
     name: "이서연", hospital: "서울중앙병원", department: "내분비내과", title: "부교수",
-    memo: "",
+    schedule: "월오후, 수오전", memo: "",
     notes: [
       "급여 인정기준이 까다로워 삭감 걱정. 심평원 고시 변경 사항 정리해서 전달 요청.",
       "가이드라인 개정에서 권고 등급이 올라간 부분을 강의 자료에 넣고 싶다고 함.",

@@ -1,7 +1,7 @@
 /**
  * 데이터 저장소 — localStorage 기반.
  * 구조: { hcps: [...], settings: { apiKey } }
- * hcp: { id, name, hospital, department, title, memo, manualTags: [],
+ * hcp: { id, name, hospital, department, title, memo, schedule, manualTags: [],
  *        notes: [{ id, date, text, tags: [], traits: [] }], aiSummary, aiSummaryAt }
  */
 
@@ -42,6 +42,7 @@ const Store = (() => {
       department: data.department.trim(),
       title: data.title || "교수",
       memo: (data.memo || "").trim(),
+      schedule: (data.schedule || "").trim(),
       manualTags: [],
       notes: [],
       aiSummary: "",
@@ -61,9 +62,44 @@ const Store = (() => {
       department: data.department.trim(),
       title: data.title || hcp.title,
       memo: (data.memo || "").trim(),
+      schedule: (data.schedule || "").trim(),
     });
     save();
     return hcp;
+  }
+
+  /**
+   * Hospital TimeTable에서 복사한 행들을 일괄 반영.
+   * 같은 병원에 동명 의사가 있으면 일정/과만 갱신, 없으면 새로 등록.
+   * rows: [{ name, department, schedule, room, notes }]
+   */
+  function upsertSchedule(hospital, rows) {
+    let added = 0, updated = 0;
+    for (const r of rows) {
+      const schedule = [r.schedule, r.room].filter(Boolean).join(" · ");
+      const existing = state.hcps.find(
+        (h) => h.hospital === hospital && h.name === r.name &&
+          (!r.department || h.department === r.department)
+      );
+      if (existing) {
+        if (schedule) existing.schedule = schedule;
+        if (r.department) existing.department = r.department;
+        if (r.notes && !existing.memo) existing.memo = r.notes;
+        updated++;
+      } else {
+        addHcp({
+          name: r.name,
+          hospital,
+          department: r.department || "미지정",
+          title: "교수",
+          memo: r.notes || "",
+          schedule,
+        });
+        added++;
+      }
+    }
+    save();
+    return { added, updated };
   }
 
   function deleteHcp(id) {
@@ -110,7 +146,7 @@ const Store = (() => {
 
   return {
     load, save, addHcp, updateHcp, deleteHcp, getHcp,
-    addNote, deleteNote, exportJson, importJson,
+    addNote, deleteNote, exportJson, importJson, upsertSchedule,
     get hcps() { return state.hcps; },
     get settings() { return state.settings; },
   };

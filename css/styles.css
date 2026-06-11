@@ -236,6 +236,28 @@ body {
 }
 .trait b { font-size: 11px; opacity: 0.7; }
 
+.palette-label { margin: 4px 0 6px; font-size: 12px; color: var(--muted); }
+
+.tag-palette { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.tag-btn {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  padding: 4px 11px;
+  border-radius: 99px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tag-btn:hover { border-color: #a5b4fc; color: var(--tag-text); background: #f8faff; }
+.tag-btn.auto { border-style: dashed; border-color: #c7d2fe; color: var(--tag-text); }
+.tag-btn.active {
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  border-color: #a5b4fc;
+  font-weight: 600;
+}
+
 .inline-form { display: flex; gap: 6px; }
 .inline-form input {
   flex: 1;
@@ -314,7 +336,7 @@ dialog {
 dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 dialog h2 { margin: 0 0 16px; font-size: 17px; }
 dialog label { display: block; margin-bottom: 12px; font-size: 13px; color: #374151; }
-dialog input, dialog select {
+dialog input, dialog select, dialog textarea {
   display: block;
   width: 100%;
   margin-top: 4px;
@@ -322,8 +344,13 @@ dialog input, dialog select {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 14px;
+  font-family: inherit;
 }
+dialog textarea { resize: vertical; white-space: pre; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+#schedule-dialog { width: min(580px, 94vw); }
+#schedule-dialog code { background: #f0f2f5; padding: 1px 5px; border-radius: 4px; font-size: 11px; }
 
 .hint { color: var(--muted); font-size: 12px; line-height: 1.6; }
 .hint-inline { color: var(--muted); font-size: 12px; font-weight: normal; }

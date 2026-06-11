@@ -18,6 +18,7 @@
     <div class="header-actions">
       <input type="search" id="search-input" placeholder="이름·병원·과·키워드 검색" />
       <button id="btn-add-hcp" class="btn btn-primary">+ 의사 추가</button>
+      <button id="btn-import-schedule" class="btn" title="Hospital TimeTable에서 분석한 스케줄 붙여넣기">📅 스케줄 가져오기</button>
       <button id="btn-settings" class="btn" title="AI 설정">⚙️ 설정</button>
       <button id="btn-export" class="btn" title="JSON 내보내기">내보내기</button>
       <button id="btn-import" class="btn" title="JSON 가져오기">가져오기</button>
@@ -54,10 +55,37 @@
           <option>봉직의</option>
         </select>
       </label>
-      <label>비고<input name="memo" placeholder="예: 외래 화/목 오전" /></label>
+      <label>외래 일정<input name="schedule" placeholder="예: 월오전, 목오후 · 본관 301호" /></label>
+      <label>비고<input name="memo" placeholder="예: 학회 좌장 다수" /></label>
       <div class="dialog-actions">
         <button type="button" class="btn" id="hcp-cancel">취소</button>
         <button type="submit" class="btn btn-primary">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Hospital TimeTable 스케줄 가져오기 모달 -->
+  <dialog id="schedule-dialog">
+    <form method="dialog" id="schedule-form">
+      <h2>📅 스케줄 가져오기</h2>
+      <p class="hint">
+        <a href="https://karmawolf-git.github.io/HTimeTable/" target="_blank" rel="noopener">Hospital TimeTable</a>에서
+        스케줄 사진을 분석한 뒤 <b>⎘ 복사</b> 버튼으로 복사한 표를 아래에 붙여넣으세요.<br />
+        형식: <code>의사명 / 진료과 / 외래일정 / 진료실 / 비고</code> (탭 구분 — 엑셀 범위 복사도 동일하게 동작)<br />
+        같은 병원에 이미 등록된 의사는 새로 만들지 않고 외래 일정만 업데이트됩니다.
+      </p>
+      <label>병원 이름 *
+        <input name="hospital" required list="schedule-hospital-list" placeholder="예: 서울중앙병원" />
+      </label>
+      <datalist id="schedule-hospital-list"></datalist>
+      <label>스케줄 데이터 *
+        <textarea name="tsv" rows="8" required
+          placeholder="의사명&#9;진료과&#9;외래일정&#9;진료실&#9;비고&#10;김민준&#9;내분비내과&#9;월오전, 목오전&#9;본관 301호&#9;"></textarea>
+      </label>
+      <p class="hint" id="schedule-preview"></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="schedule-cancel">취소</button>
+        <button type="submit" class="btn btn-primary">가져오기</button>
       </div>
     </form>
   </dialog>

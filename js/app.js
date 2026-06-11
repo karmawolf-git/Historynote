@@ -30,7 +30,7 @@
   function matchesSearch(hcp) {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    if ([hcp.name, hcp.hospital, hcp.department, hcp.title].some((f) => f.toLowerCase().includes(q))) return true;
+    if ([hcp.name, hcp.hospital, hcp.department, hcp.title, hcp.schedule || ""].some((f) => f.toLowerCase().includes(q))) return true;
     const { tagCounts, traitCounts } = Tagger.aggregate(hcp);
     return [...Object.keys(tagCounts), ...Object.keys(traitCounts)]
       .some((t) => t.toLowerCase().includes(q));
@@ -120,6 +120,7 @@
           <div>
             <h2>${esc(hcp.name)} <span class="title-badge">${esc(hcp.title)}</span></h2>
             <p class="affil">🏥 ${esc(hcp.hospital)} · ${esc(hcp.department)}${hcp.memo ? ` · ${esc(hcp.memo)}` : ""}</p>
+            ${hcp.schedule ? `<p class="affil">📅 외래: ${esc(hcp.schedule)}</p>` : ""}
           </div>
           <div class="profile-actions">
             <button class="btn btn-sm" id="btn-edit-hcp">수정</button>
@@ -139,9 +140,18 @@
                   </span>`).join("")
               : `<p class="hint">메모를 입력하면 키워드가 자동 추출됩니다.</p>`}
           </div>
+          <p class="palette-label">버튼을 눌러 태그를 추가/해제하세요</p>
+          <div class="tag-palette">
+            ${TAG_DICTIONARY.map((e) => `
+              <button type="button"
+                class="tag-btn ${hcp.manualTags.includes(e.tag) ? "active" : tagCounts[e.tag] ? "auto" : ""}"
+                data-toggle-tag="${esc(e.tag)}"
+                title="${tagCounts[e.tag] && !hcp.manualTags.includes(e.tag) ? "메모에서 자동 추출된 태그입니다. 누르면 고정 태그로 추가됩니다." : ""}">
+                ${esc(e.tag)}
+              </button>`).join("")}
+          </div>
           <form id="manual-tag-form" class="inline-form">
-            <input name="tag" list="known-tags" placeholder="태그 직접 추가 (예: 당뇨)" />
-            <datalist id="known-tags">${TAG_DICTIONARY.map((e) => `<option value="${esc(e.tag)}">`).join("")}</datalist>
+            <input name="tag" placeholder="목록에 없는 태그 직접 입력" />
             <button class="btn btn-sm" type="submit">추가</button>
           </form>
         </section>
@@ -209,6 +219,19 @@
         selectedId = null;
         render();
       }
+    });
+
+    detail.querySelectorAll("[data-toggle-tag]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tag = btn.dataset.toggleTag;
+        if (hcp.manualTags.includes(tag)) {
+          hcp.manualTags = hcp.manualTags.filter((t) => t !== tag);
+        } else {
+          hcp.manualTags.push(tag);
+        }
+        Store.save();
+        render();
+      });
     });
 
     $("#manual-tag-form").addEventListener("submit", (e) => {
@@ -291,6 +314,7 @@
     hcpForm.hospital.value = hcp?.hospital || "";
     hcpForm.department.value = hcp?.department || "";
     hcpForm.title.value = hcp?.title || "교수";
+    hcpForm.schedule.value = hcp?.schedule || "";
     hcpForm.memo.value = hcp?.memo || "";
     // 기존 병원/과를 자동완성으로 제안
     $("#hospital-list").innerHTML = [...new Set(Store.hcps.map((h) => h.hospital))]
@@ -328,6 +352,57 @@
     render();
   });
   $("#settings-cancel").addEventListener("click", () => settingsDialog.close());
+
+  // ---------- Hospital TimeTable 스케줄 가져오기 ----------
+
+  // HTimeTable의 "⎘ 복사" 출력(의사명\t진료과\t외래일정\t진료실\t비고)을 파싱
+  function parseScheduleTsv(text) {
+    const rows = [];
+    for (const line of text.split(/\r?\n/)) {
+      const cols = line.split("\t").map((c) => c.trim());
+      if (!cols[0] || cols[0] === "의사명") continue; // 빈 줄·헤더 건너뜀
+      rows.push({
+        name: cols[0],
+        department: cols[1] || "",
+        schedule: cols[2] || "",
+        room: cols[3] || "",
+        notes: cols[4] || "",
+      });
+    }
+    return rows;
+  }
+
+  const scheduleDialog = $("#schedule-dialog");
+  const scheduleForm = $("#schedule-form");
+
+  $("#btn-import-schedule").addEventListener("click", () => {
+    scheduleForm.reset();
+    $("#schedule-preview").textContent = "";
+    $("#schedule-hospital-list").innerHTML = [...new Set(Store.hcps.map((h) => h.hospital))]
+      .map((h) => `<option value="${esc(h)}">`).join("");
+    scheduleDialog.showModal();
+  });
+
+  scheduleForm.tsv.addEventListener("input", () => {
+    const rows = parseScheduleTsv(scheduleForm.tsv.value);
+    $("#schedule-preview").textContent = rows.length
+      ? `인식된 의사 ${rows.length}명: ${rows.slice(0, 5).map((r) => r.name).join(", ")}${rows.length > 5 ? " …" : ""}`
+      : "";
+  });
+
+  scheduleForm.addEventListener("submit", (e) => {
+    const hospital = scheduleForm.hospital.value.trim();
+    const rows = parseScheduleTsv(scheduleForm.tsv.value);
+    if (!rows.length) {
+      e.preventDefault();
+      alert("인식된 행이 없습니다. Hospital TimeTable에서 복사한 표(탭 구분)를 그대로 붙여넣어 주세요.");
+      return;
+    }
+    const { added, updated } = Store.upsertSchedule(hospital, rows);
+    alert(`가져오기 완료 — 신규 등록 ${added}명, 일정 업데이트 ${updated}명`);
+    render();
+  });
+  $("#schedule-cancel").addEventListener("click", () => scheduleDialog.close());
 
   // ---------- 헤더 이벤트 ----------
 
