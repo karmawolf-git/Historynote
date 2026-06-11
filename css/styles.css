@@ -136,6 +136,22 @@ body {
   margin-left: 4px;
 }
 
+.tree-del {
+  float: right;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  visibility: hidden;
+}
+.tree-hospital > summary:hover .tree-del,
+.tree-dept > summary:hover .tree-del { visibility: visible; }
+.tree-del:hover { background: #fef2f2; color: var(--danger); }
+
 .tree-doc {
   padding: 7px 8px;
   border-radius: 6px;

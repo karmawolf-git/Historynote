@@ -66,10 +66,10 @@
     for (const hosp of hospitals) {
       const depts = Object.keys(tree[hosp]).sort((a, b) => a.localeCompare(b, "ko"));
       const hospCount = depts.reduce((s, d) => s + tree[hosp][d].length, 0);
-      html += `<details open class="tree-hospital"><summary>🏥 ${esc(hosp)} <span class="count">${hospCount}</span></summary>`;
+      html += `<details open class="tree-hospital"><summary>🏥 ${esc(hosp)} <span class="count">${hospCount}</span><button class="tree-del" data-del-hospital="${esc(hosp)}" title="병원 전체 삭제">×</button></summary>`;
       for (const dept of depts) {
         const docs = tree[hosp][dept].sort((a, b) => a.name.localeCompare(b.name, "ko"));
-        html += `<details open class="tree-dept"><summary>${esc(dept)} <span class="count">${docs.length}</span></summary><ul>`;
+        html += `<details open class="tree-dept"><summary>${esc(dept)} <span class="count">${docs.length}</span><button class="tree-del" data-del-dept="${esc(dept)}" data-del-dept-hospital="${esc(hosp)}" title="과 삭제">×</button></summary><ul>`;
         for (const doc of docs) {
           const { tagCounts } = Tagger.aggregate(doc);
           const topTags = Tagger.sortedEntries(tagCounts).slice(0, 2).map(([t]) => t);
@@ -90,6 +90,36 @@
     sidebar.querySelectorAll(".tree-doc").forEach((el) => {
       el.addEventListener("click", () => {
         selectedId = el.dataset.id;
+        render();
+      });
+    });
+
+    // 병원/과 삭제 — 클릭이 <summary> 접기/펼치기로 전파되지 않게 막는다
+    sidebar.querySelectorAll("[data-del-hospital]").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const hosp = btn.dataset.delHospital;
+        const targets = Store.hcps.filter((h) => h.hospital === hosp);
+        const noteCount = targets.reduce((s, h) => s + h.notes.length, 0);
+        if (!confirm(`'${hosp}' 병원을 삭제할까요?\n소속 의사 ${targets.length}명과 메모 ${noteCount}건이 모두 삭제됩니다.`)) return;
+        Store.deleteHospital(hosp);
+        if (selectedId && !Store.getHcp(selectedId)) selectedId = null;
+        render();
+      });
+    });
+
+    sidebar.querySelectorAll("[data-del-dept]").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const hosp = btn.dataset.delDeptHospital;
+        const dept = btn.dataset.delDept;
+        const targets = Store.hcps.filter((h) => h.hospital === hosp && h.department === dept);
+        const noteCount = targets.reduce((s, h) => s + h.notes.length, 0);
+        if (!confirm(`'${hosp} ${dept}'를 삭제할까요?\n소속 의사 ${targets.length}명과 메모 ${noteCount}건이 모두 삭제됩니다.`)) return;
+        Store.deleteDepartment(hosp, dept);
+        if (selectedId && !Store.getHcp(selectedId)) selectedId = null;
         render();
       });
     });

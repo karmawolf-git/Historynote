@@ -107,6 +107,20 @@ const Store = (() => {
     save();
   }
 
+  // 병원 전체 삭제 — 해당 병원 소속 의사 모두 제거
+  function deleteHospital(hospital) {
+    state.hcps = state.hcps.filter((h) => h.hospital !== hospital);
+    save();
+  }
+
+  // 특정 병원의 진료과 삭제 — 해당 과 소속 의사 모두 제거
+  function deleteDepartment(hospital, department) {
+    state.hcps = state.hcps.filter(
+      (h) => !(h.hospital === hospital && h.department === department)
+    );
+    save();
+  }
+
   function getHcp(id) {
     return state.hcps.find((h) => h.id === id) || null;
   }
@@ -145,7 +159,7 @@ const Store = (() => {
   }
 
   return {
-    load, save, addHcp, updateHcp, deleteHcp, getHcp,
+    load, save, addHcp, updateHcp, deleteHcp, deleteHospital, deleteDepartment, getHcp,
     addNote, deleteNote, exportJson, importJson, upsertSchedule,
     get hcps() { return state.hcps; },
     get settings() { return state.settings; },
